@@ -1,0 +1,147 @@
+/*
+ * Copyright (c) 2017 General Electric Company. All rights reserved.
+ *
+ * The copyright to the computer software herein is the property of
+ * General Electric Company. The software may be used and/or copied only
+ * with the written permission of General Electric Company or in accordance
+ * with the terms and conditions stipulated in the agreement/contract
+ * under which the software has been supplied.
+ */
+ 
+package pdfoperations;
+
+import java.io.BufferedWriter;
+/**
+ * 
+ * @author predix -
+ */
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Calendar;
+
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.encryption.InvalidPasswordException;
+import org.apache.pdfbox.text.PDFTextStripper;
+import org.apache.pdfbox.text.PDFTextStripperByArea;
+
+import com.sun.xml.internal.ws.util.StringUtils;
+
+/**
+ * 
+ * @author predix -
+ */
+
+
+public class ReadPdfAndSkipFirst4LineWriteToFile {
+
+    public static void main(String[] args) throws InvalidPasswordException, IOException {
+
+    	try (PDDocument document = PDDocument.load(new File("/predix/Downloads/Table3.pdf"))) {
+
+            document.getClass();
+            String[] year_quarter = null;
+            String OECD_Tag = null;
+            String Region_Tag = null;
+            String 
+            if (!document.isEncrypted()) {
+
+                PDFTextStripperByArea stripper = new PDFTextStripperByArea();
+                stripper.setSortByPosition(true);
+
+                PDFTextStripper tStripper = new PDFTextStripper();
+
+                String pdfFileInText = tStripper.getText(document);
+                //System.out.println("Text:" + st);
+
+				// split by whitespace
+                String lines[] = pdfFileInText.split("\\r?\\n");
+                // Createing string buffer for writting
+           	    BufferedWriter writer = null;
+           	
+           	    //Creating text file with time stamp
+           	    //String timeLog = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
+                File logFile = new File("/predix/Downloads/table2");
+                
+                // This will output the full path where the file will be written to...
+                System.out.println(logFile.getCanonicalPath());
+                
+                writer = new BufferedWriter(new FileWriter(logFile));
+                
+                //Counter is used to skip the first 3 line from pdf and write it to file
+                int LineCounter = 1;
+                
+                System.out.println("Writing data to text file");
+                //Create Page Header
+            	String file_header = "Tag"+ "," + "Variable"+ "," + "Value"+ "," +"FileName"+ "," + "date_field"+ ","+"Region_Tag";
+            	
+            	//Write it to File
+            	//writer.write(file_header);
+            	//writer.write('\n');
+            	System.out.println(file_header);
+            	
+                for (String line : lines) {
+                	
+                	//System.out.println(beforeFirstDot);
+                	if(LineCounter == 5 ){
+                		
+                		//System.out.println(line);
+                		
+                		year_quarter = line.split(" ");
+                		
+                		//Count the space and column
+                		int string_length = year_quarter.length;
+                		
+                		//System.out.println("Total year_quarter =" + string_length );
+                	}
+                	
+                	if(LineCounter > 6){
+                		
+                		String[] part = line.split("(?<=\\D)(?=\\d)");
+                		String[] numbers = line.split(part[0]);
+                		String[] eachnumber = numbers[1].split(" ");
+                		//System.out.println(numbers[1]);
+                		
+                		String input = part[0]; 
+                		if (input.contains("world") || input.contains("Total")){
+                			if(input.contains("world")){
+                				OECD_Tag = "world";
+                    			Region_Tag = "";
+                			}
+                			else{
+                				OECD_Tag = "Total";
+                				Region_Tag = "";
+                			}
+                		
+                		}
+                		else{
+                			OECD_Tag = "";
+                			Region_Tag = input;
+                		}
+                		
+                		
+                		
+                		
+                		System.out.println(part[0] + "," + year_quarter[0] + "," +eachnumber[0]+ ","+ "13/12/2016" + 
+                		","  + "1/1/"+year_quarter[0]+ ","+ OECD_Tag+ ","+ Region_Tag );
+                		//writer.write(part[0] + "," +year_quarter[0] + "," +part[1] );
+                		//System.out.println(line);
+                		//writer.write('\n');
+                		
+                	}
+                	LineCounter++; 
+                	 
+                    //System.out.println(line);
+                }
+               
+                writer.close();
+
+            }
+
+        }
+
+
+    }
+}
